@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>wordle like game</title>
+</head>
+<body>
+    <div id="GranContainer">
+        <span>Wordle like</span> 
+        <div id="Cells">
+        </div>
+    </div>
+    
+    <style>
+        *
+        {
+            margin: 0;
+            padding: 0;
+            transition: .3s;
+            color: #fff;
+            font-size: 2vw;
+            font-family: monospace;
+        }
+
+        body
+        {
+            background: #252525;
+            /* background: #6f1d1d;
+            background: #3b6718; */
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+
+        #GranContainer
+        {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8vh;
+        }
+
+        #Cells
+        {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5vw;
+            height: 75vh;
+            width: 100vw;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .Line
+        {
+            display: flex;
+            gap: 0.5vw;
+            flex-direction: row;
+        }
+
+        .Cell
+        {
+            width: 4.7vw;
+            height: 5vw;
+            border-radius: .5vw;
+            /* background-color: rgb(128, 19, 19); */
+            overflow: hidden;
+            background: #393b87;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .LetterContainer
+        {
+            height: 4.7vw;
+            width: 4.7vw;
+            border-radius:  .5vw;
+            background: #22233c;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            align-self: flex-end;
+        }
+
+        .Used
+        {
+            filter: opacity(0.6);
+        }
+
+        .Screen
+        {
+            position: absolute;
+            width: 50vw;
+            height: 50vh;
+            top: 25vh;
+            border-radius: .5vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5rem;
+        }
+
+        .Loser
+        {
+            background-color: crimson;
+        }
+
+        .Winner
+        {
+            background-color: #0bc70b;
+        }
+
+        .WordContainer
+        {
+            background-color: #b4b4b4;
+            margin-top: 3vw;
+            width: 30vw;
+            height: 10vw;
+            border-radius: .5vw;
+        }
+
+        .InsideContainerLoser
+        {
+            background-color: white;
+            border-radius: .8vw;
+            font-size: 2.5rem;
+            color: crimson;
+            width: 30vw;
+            height: 9vw;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .InsideContainerWinner
+        {
+            background-color: white;
+            border-radius: .8vw;
+            font-size: 2.5rem;
+            color: #0bc70b;
+            width: 30vw;
+            height: 9vw;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .WordContainer:hover > .InsideContainerLoser
+        {
+            height: 8.25vw;
+        }
+
+        .WordContainer:hover > .InsideContainerWinner
+        {
+            height: 8.25vw;
+        }
+
+        a:active
+        {
+            opacity: 0.7;
+        }
+
+
+        .Correct
+        {
+            background-color: green;    
+        }
+
+        .Correct .LetterContainer
+        {
+            background-color: #005000;    
+        }
+
+        .Exists
+        {
+            background-color: rgb(223, 223, 83);
+        }
+
+        .Exists .LetterContainer
+        {
+            background-color: rgb(226, 178, 4);
+        }
+    
+    </style>
+    
+    <script>
+        const randint = (min, max) => {
+            min = Math.ceil(min);
+            max = Math.floor(max);
+            return Math.floor(Math.random() * (max - min)) + min;
+        }
+
+        //? Logica usada para criar o codigo de uma tecla
+        const calcCode = letter => {
+            let i = 0;
+            for(let l of letter)
+                i += l.charCodeAt(0);
+            return i;
+        }
+
+        const lines = 6; //? Representa o total de tentativas
+
+        const cellList = [];
+
+        const cellsHTML = document.querySelector('#Cells');
+
+        let currentLine = 0;
+        let currentLineIndex = 0;
+
+        let word = "";
+        let toDisplayWord = "";
+
+        //? Transfere o estilo de uma celula com o foco para a celula atual e retira da celula anterior
+        const changeFocus = (olderX, olderY) => {
+            cellList[olderY][olderX].children[0].style.height = "4.7vw";
+
+            // console.log(olderX, olderY);
+            // console.log(currentLineIndex, currentLine);
+
+            cellList[currentLine][currentLineIndex].children[0].style.height = "4.3vw";
+        }
+
+        //? Quando se clica em uma celula caso ela esteja contida na linha atual o valor de currentLineIndex
+        //? é substituido pela posição onde a celula se encontra em cellList[currentLine]
+        const onClick = e => {  
+            const target = e.target;
+
+            cellList[currentLine].forEach((element, index) => {
+                if (target == element || target == element.children[0])
+                {
+                    const olderX = currentLineIndex;
+                    currentLineIndex = index;
+                    changeFocus(olderX, currentLine);
+                    // console.log(olderX, currentLineIndex);
+                }
+                
+            });
+        }
+
+        //? Forma mais enxuta de trocar o valor da celula atual
+        const changeCellContent = letter => cellList[currentLine][currentLineIndex].children[0].innerText = letter;
+
+        //? Forma mais enxuta de obter o valor da celula atual
+        const getCellContent = () => cellList[currentLine][currentLineIndex].children[0].innerText;
+
+        const currentTry = [...word]; //? Gera um array de "char" com o mesmo numero de elementos da palavra escolhida
+        currentTry.fill(' ');
+
+        //? Pinta uma celula de verde
+        const setCorrect = (x) => {
+            cellList[currentLine][x].classList.add('Correct');
+        }
+
+        //? Pinta uma celular de amarelo
+        const setExists = (x) => {
+            cellList[currentLine][x].classList.add('Exists');
+        }
+
+        //? Diminui a opacidade de uma linha
+        const setUsed = () => {
+            cellsHTML.children[currentLine].style.opacity = 0.6;
+        }
+
+        //? Transforma os caracteres da resposta do usuario em uma string sem espaços vazios     
+        const currentTryToString = () => {
+            let s = '';
+            currentTry.forEach(e => { if(e != ' ') s+=e});
+
+            return s;
+        }
+
+        //? Verifica as letras que foram digitadas em posições corretas ou que existem na palavra e faz a representação visual
+        const verifyLine = () => {
+            const wordArray = [...word];
+            const visited = [...word];
+            visited.fill(false);
+
+            for(let i = 0; i < wordArray.length; i++)
+            {
+                if(currentTry[i] == wordArray[i])
+                {
+                    setCorrect(i);
+                    wordArray[i] = '';
+                    visited[i] = true;
+                }
+            }
+
+            for(let i = 0; i < wordArray.length; i++)
+            {
+                const index = wordArray.indexOf( currentTry[i] );
+                if(index != -1 && !visited[i])
+                {
+                    setExists(i);
+                    wordArray[index] = '';
+                }
+            }
+
+        }
+
+        //? Setta a tela de final que representa se o jogo foi perdido ou vencido
+        const setScreen = (className, message, color) => {
+
+            document.getElementsByTagName('body')[0].style.background = color; //'#6f1d1d';
+            document.querySelector('#GranContainer').children[0].style.opacity = 0.6;
+
+
+            const screen = document.createElement('div');
+            
+            screen.classList.add('Screen');
+            screen.classList.add(className);
+
+            screen.innerText = message;
+
+            const ancor = document.createElement('a');
+            const wordContainer = document.createElement('div'); const wordInsideContainer = document.createElement('div'); 
+            wordInsideContainer.innerText = toDisplayWord;
+            wordContainer.append(wordInsideContainer);
+            wordInsideContainer.classList.add('InsideContainer' + className);
+            wordContainer.classList.add('WordContainer');
+
+            ancor.rel = "external"; ancor.target = "_blank"; ancor.title = "Buscar significado de " + toDisplayWord.toLowerCase();
+
+            ancor.href = `https://www.google.com/search?q=${toDisplayWord.toLowerCase()}+significado`;
+            ancor.append(wordContainer);
+            screen.append(ancor);
+
+            const orientation = ['left', 'right'][randint(0,2)];
+
+            screen.style[orientation] = "200vw";
+            
+            document.getElementsByTagName('body')[0].append(screen);
+
+            setTimeout(() => {
+                screen.style[orientation] = "18vw";
+            }, 100);
+            setTimeout(() => {
+                screen.style[orientation] = "25vw";
+            }, 400);
+        }
+
+        //? Função que sera ativada a cada clique no teclado
+        const keyDown = e => {
+            let letter = e.key.toUpperCase(); //? Obtem a tecla digitada em maisculo 
+            let code = calcCode(letter); //? Obtem um numero unico que representa cada tecla partindo do somatorio dos valores 
+                                        //? na tabela ascii dos elementos
+
+            // console.log(code);
+
+            if(code == 382 && currentTryToString().length == word.length) //? Condição de ENTER 
+            {
+                console.log(currentTryToString());
+                const bool = currentTryToString() == word;
+
+                verifyLine();
+
+                if(bool) // Caso tenha vencido
+                {
+                    setScreen('Winner', '¡Acertou!', '#006300');
+                    // cellsHTML.innerHTML = "Ganhou porra"
+                    onkeydown = ()=>{};
+                    return;
+                }
+
+                const olderX = currentLineIndex,
+                    olderY = currentLine;
+                
+                setUsed();
+
+                currentLine++;
+                currentLineIndex = 0;
+
+                if(currentLine == lines) // Caso tenha perdido
+                {
+                    setScreen('Loser', '¡Errou!', '#6f1d1d');
+                    onkeydown = ()=>{};
+                    return;
+                }
+
+
+                changeFocus(olderX, olderY);
+
+                currentTry.fill(' ');
+            }
+
+            if(code == 637) //? Condição para BACKSPACE
+            {
+                if(currentLineIndex == 0 && getCellContent() == '') return; //? Ja na pos 0 não é possivel voltar nem apagar nada
+
+                if(getCellContent() != '') //? Estando na ultima celula e ela sendo preenchida
+                                        //? não se volta uma casa e apenas elimina o valor 
+                                        //? ultima
+                {
+                    currentTry[currentLineIndex] = ' ';
+                    changeCellContent(null);
+                }     
+                else //? Em qualquer outra situação se volta uma casa e deleta o elemento dessa casa
+                {
+                    const olderX = currentLineIndex;
+                        
+                    currentLineIndex--;
+                    
+                    changeFocus(olderX, currentLine);
+                    
+                    currentTry[currentLineIndex] = ' ';
+                    changeCellContent(null);
+                }
+                return;
+            }
+
+            if(code == 694 && currentLineIndex > 0) //? Seta pra esquerda
+            {
+                const olderX = currentLineIndex;
+            
+                currentLineIndex--;
+
+                changeFocus(olderX, currentLine);
+            }
+            else if(code == 777 && currentLineIndex < word.length-1) //? Seta pra direita
+            {
+                const olderX = currentLineIndex;
+            
+                currentLineIndex++;
+
+                changeFocus(olderX, currentLine);
+            }
+
+            if(currentLineIndex == word.length - 1 && getCellContent() != '') //? Para evitar a constante troca de letra quando
+                                                                            //? se esta com a ultima celula completa
+                return;
+            
+            if(code >= 65 && code <= 90) //? Insere os valores caso sejam letras nas casas atuais
+            {
+                changeCellContent(letter);
+                currentTry[currentLineIndex] = letter.charAt(0);
+                // console.log(currentTryToString());
+                
+                if(currentLineIndex < word.length - 1) //? Caso não escape do index maximo se soma 1 ao index atual
+                {
+                    const olderX = currentLineIndex;
+            
+                    currentLineIndex++;
+            
+                    changeFocus(olderX, currentLine);
+                }
+            }
+        }
+
+        //? Inicia as celulas
+        const setTable = () =>{
+            for(let y = 0; y < lines; y++)
+            {
+                const aux = [];
+                
+                const line = document.createElement('div');
+                
+                line.classList.add('Line');
+
+                for(let x = 0; x < word.length; x++) // Creates all the cells of the table
+                {
+                    const cell = document.createElement('div');
+                    cell.classList.add('Cell');
+
+                    const letterContainer = document.createElement('div');
+                    letterContainer.classList.add('LetterContainer');
+
+                    cell.append(letterContainer);
+
+                    cell.addEventListener('click', (e) => onClick(e));
+
+                    aux.push(cell);
+                    line.append(cell);
+                }
+                cellsHTML.append(line);
+                cellList.push(aux);
+            }
+        }
+
+        //? Substitui caracteres com acento ou ç e pelos respectivos caracteres sem acentuação
+        const removeStrangeChar = (s) => {
+            s = [...s];
+            s = s.map((e) => {
+
+                if(e == 'á' || e == 'â' || e == 'ã')
+                    return 'a';
+                if(e == 'é' || e == 'ê' || e == 'ẽ')
+                    return 'e';
+                if(e == 'í' || e == 'î' || e == 'ĩ')
+                    return 'i';
+                if(e == 'ó' || e == 'ô' || e == 'õ')
+                    return 'o';
+                if(e == 'ú' || e == 'û' || e == 'ũ')
+                    return 'u';
+                if(e == 'ç')
+                    return 'c';
+
+                return e;
+            })
+
+            let toReturn ="";
+
+            s.forEach(e => toReturn += e);
+
+            return toReturn;
+        }
+
+        //? Recursivamente busca uma palavra até com 4 < tamanho < 8 e sem ifem e quando acha se inicia a o jogo
+        const fetchData = () => {
+            fetch('https://api.dicionario-aberto.net/random')
+            .then(response => response.json())
+            .then(d => {
+                if(-1 != d['word'].indexOf('-') || d['word'].length > 8 || d['word'].length < 4)
+                {
+                    fetchData()
+                }
+                else
+                {
+                    toDisplayWord = d['word'].toUpperCase();
+                    word = removeStrangeChar(d['word'].toLowerCase()).toUpperCase();
+                    setTable();
+
+                    onkeydown = keyDown;
+                    changeFocus(0,0);
+                }
+            })
+            .catch(err => console.log(err))
+        }
+
+        fetchData();
+
+    </script>
+</body>
+</html>

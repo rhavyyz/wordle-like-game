@@ -1,0 +1,173 @@
+*
+{
+    margin: 0;
+    padding: 0;
+    transition: .3s;
+    color: #fff;
+    font-size: 2vw;
+    font-family: monospace;
+}
+
+body
+{
+    background: #252525;
+    /* background: #6f1d1d;
+    background: #3b6718; */
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+}
+
+#GranContainer
+{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8vh;
+}
+
+#Cells
+{
+    display: flex;
+    flex-direction: column;
+    gap: 0.5vw;
+    height: 75vh;
+    width: 100vw;
+    align-items: center;
+    justify-content: center;
+}
+
+.Line
+{
+    display: flex;
+    gap: 0.5vw;
+    flex-direction: row;
+}
+
+.Cell
+{
+    width: 4.7vw;
+    height: 5vw;
+    border-radius: .5vw;
+    /* background-color: rgb(128, 19, 19); */
+    overflow: hidden;
+    background: #393b87;
+    display: flex;
+    flex-direction: column;
+}
+
+.LetterContainer
+{
+    height: 4.7vw;
+    width: 4.7vw;
+    border-radius:  .5vw;
+    background: #22233c;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-self: flex-end;
+}
+
+.Used
+{
+    filter: opacity(0.6);
+}
+
+.Screen
+{
+    position: absolute;
+    width: 50vw;
+    height: 50vh;
+    top: 25vh;
+    border-radius: .5vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 2.5rem;
+}
+
+.Loser
+{
+    background-color: crimson;
+}
+
+.Winner
+{
+    background-color: #0bc70b;
+}
+
+.WordContainer
+{
+    background-color: #b4b4b4;
+    margin-top: 3vw;
+    width: 30vw;
+    height: 10vw;
+    border-radius: .5vw;
+}
+
+.InsideContainerLoser
+{
+    background-color: white;
+    border-radius: .8vw;
+    font-size: 2.5rem;
+    color: crimson;
+    width: 30vw;
+    height: 9vw;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.InsideContainerWinner
+{
+    background-color: white;
+    border-radius: .8vw;
+    font-size: 2.5rem;
+    color: #0bc70b;
+    width: 30vw;
+    height: 9vw;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.WordContainer:hover > .InsideContainerLoser
+{
+    height: 8.25vw;
+}
+
+.WordContainer:hover > .InsideContainerWinner
+{
+    height: 8.25vw;
+}
+
+a:active
+{
+    opacity: 0.7;
+}
+
+
+.Correct
+{
+    background-color: green;    
+}
+
+.Correct .LetterContainer
+{
+    background-color: #005000;    
+}
+
+.Exists
+{
+    background-color: rgb(223, 223, 83);
+}
+
+.Exists .LetterContainer
+{
+    background-color: rgb(226, 178, 4);
+}
